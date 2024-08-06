@@ -11,6 +11,7 @@
 #ifdef _WIN32
   #include <winsock.h>
 #else
+  #include <unistd.h>
   #include <arpa/inet.h>
   #include <sys/socket.h>
 #endif
@@ -79,7 +80,6 @@ namespace http {
       int server_port;
       long server_new_request;
       std::string server_hostname;
-      int server_socket_len;
       std::string server_response_message;
 
       // Define socket address struct
@@ -87,12 +87,14 @@ namespace http {
 
       // Define variables for win32 and unix
       #ifdef _WIN32
+        int server_socket_len;
         SOCKET server_socket;
         SOCKET server_new_socket;
         WSADATA server_wsa_data;
       #else
         int server_socket;
         int server_new_socket;
+        unsigned int server_socket_len;
       #endif
 
       // Start Defining Methods
@@ -149,7 +151,7 @@ namespace http {
           debug::quit("Failed to create socket.");
         }
 
-        if (bind(server_socket, (struct sockaddr *)&server_address, server_socket_len) < 0) {
+        if (bind(server_socket, (sockaddr *)&server_address, server_socket_len) < 0) {
           debug::quit("Failed to bind socket.");
         }
 
@@ -157,7 +159,8 @@ namespace http {
       }
 
       void acceptConnection() {
-        server_new_socket = accept(server_socket, (struct sockaddr *)&server_address, &server_socket_len);
+        server_new_socket = accept(server_socket, (sockaddr *)&server_address, &server_socket_len);
+
         if (server_new_socket < 0) {
           debug::quit(parse::parseMessage("ERROR: Failed to accept connection from address %1s:%2s", {inet_ntoa(server_address.sin_addr), std::to_string(ntohs(server_address.sin_port))}));
         } else {
@@ -166,9 +169,10 @@ namespace http {
       }
 
       void sendDefaultResponse() {
+        long totalBytesSent = 0;
+
         #ifdef _WIN32
           int bytesSent;
-          long totalBytesSent = 0;
 
           while (totalBytesSent < server_response_message.size()) {
             bytesSent = send(server_new_socket, server_response_message.c_str(), server_response_message.size(), 0);
@@ -181,11 +185,9 @@ namespace http {
 
           if (bytesSent < 0 || totalBytesSent != server_response_message.size()) debug::print("Failed to send response to client.");
         #else
-          long bytesSent;
+          totalBytesSent = write(server_new_socket, server_response_message.c_str(), server_response_message.size());
 
-          bytesSent = write(server_new_socket, server_response_message.c_str(), server_response_message.size());
-
-          if (bytesSent < 0 || totalBytesSent != server_response_message.size()) debug::print("Failed to send response to client.");
+          if (totalBytesSent < 0 || totalBytesSent != server_response_message.size()) debug::print("Failed to send response to client.");
         #endif
       }
 
@@ -210,7 +212,12 @@ namespace http {
 
           sendDefaultResponse();
 
-          closesocket(server_new_socket);
+          #ifdef _WIN32
+            closesocket(server_new_socket);
+          #else
+            close(server_new_socket);
+          #endif
+
           debug::print("INFO: Connection closed.");
         }
       }
