@@ -9,7 +9,7 @@
 namespace parse {
   /**
    * @brief Parse a message with arguments,
-   *        example: ("hello %s", ["world"])
+   *        example: (%1 %2", ["hello", "world"])
    *        would return "hello world"
    * 
    * @param message (std::string) - The message to parse
@@ -17,12 +17,12 @@ namespace parse {
    * 
    * @return std::string
    */
-  static std::string parseMessage(const std::string &message, const std::vector<std::string> &args) {
+  static std::string message(const std::string &message, const std::vector<std::string> &args) {
     std::string parsed_message = message;
 
     for (int i = 0; i < args.size(); i++) {
       std::string arg = args[i];
-      std::string placeholder = "%" + std::to_string(i + 1) + "s";
+      std::string placeholder = "%" + std::to_string(i + 1);
 
       size_t pos = parsed_message.find(placeholder);
 
@@ -32,6 +32,23 @@ namespace parse {
     }
 
     return parsed_message;
+  }
+
+  /**
+   * @brief Parse data from uppercase to lowercase
+   * 
+   * @param data (std::string) - The data to parse
+   * 
+   * @return std::string
+   */
+  static std::string to_lower(const std::string &data) {
+    std::string parsed_data = data;
+
+    for (int i = 0; i < parsed_data.length(); i++) {
+      parsed_data[i] = tolower(parsed_data[i]);
+    }
+
+    return parsed_data;
   }
 }
 

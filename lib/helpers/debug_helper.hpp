@@ -5,6 +5,9 @@
 
 #include <iostream>
 
+#include "../configs/app_config.hpp"
+#include "../enums/app_env_enum.hpp"
+
 namespace debug {
   static void print(const std::string &message) {
     std::cout << message << std::endl;
@@ -12,7 +15,11 @@ namespace debug {
 
   static void quit(const std::string &message) {
     print("ERROR: " + message);
-    exit(1);
+
+    if (APP_ENVIRONMENT_CONFIG == AppEnvironment::DEVELOPMENT) {
+      print("Exiting...");
+      exit(1);
+    }
   }
 }
 
