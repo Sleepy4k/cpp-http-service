@@ -21,8 +21,8 @@ int main() {
   TCPServer server = TCPServer(config);
   
   // Register the routes
-  server.setRoute(api());
-  server.setRoute(web());
+  server.useRoute(api());
+  server.useRoute(web());
 
   // Run the server
   server.run();
