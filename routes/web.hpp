@@ -6,11 +6,13 @@
 #include "../lib/structs/server_route_struct.hpp"
 #include "../lib/structs/server_router_struct.hpp"
 
-Router web() {
-  Router router = Router("");
+#include "../controllers/home_controller.hpp"
 
-  router.routes.push_back(Route("home", "GET", "/", "index"));
-  router.routes.push_back(Route("about", "GET", "/about", "about"));
+Router web() {
+  Router router = Router();
+
+  router.get("/", HomeController().index(), "home");
+  router.get("/about", HomeController().about());
 
   return router;
 }

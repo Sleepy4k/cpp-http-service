@@ -6,11 +6,13 @@
 #include "../lib/structs/server_route_struct.hpp"
 #include "../lib/structs/server_router_struct.hpp"
 
+#include "../controllers/api_controller.hpp"
+
 Router api() {
   Router router = Router("/api");
 
-  router.routes.push_back(Route("home", "GET", "/", "index"));
-  router.routes.push_back(Route("about", "GET", "/about", "about"));
+  router.get("/", ApiController().index(), "home");
+  router.get("/about", ApiController().about(), "about");
 
   return router;
 }
