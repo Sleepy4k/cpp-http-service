@@ -79,7 +79,7 @@ namespace http {
        * 
        * @return void
        */
-      void setRoute(Router route) {
+      void useRoute(Router route) {
         // If the route is empty, we will set the default route
         // If the route is not empty, we will add the route to the route list
         if (server_route.isEmpty()) server_route.setRouter(route);
@@ -231,9 +231,9 @@ namespace http {
         sendResponse();
       }
 
-      void sendErrorResponse(const RequestHeader &header) {
+      void sendErrorResponse(const RequestHeader &header, const bool is_api = false) {
         // Check if accept wants json, with regex */json
-        if (header.accept.find("/json") != std::string::npos) {
+        if (header.accept.find("/json") != std::string::npos || is_api) {
           std::string json = "{ \"status\": \"Server is running.\", \"message\": \"Terjadi error pada saat melakukan proses handle request.\" }";
           server_response_message = "HTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: " + std::to_string(json.size()) + "\n\n" + json;
         } else {
@@ -271,17 +271,28 @@ namespace http {
           if (file.good()) {
             // Check if file is restricted such as .env, .git, etc
             if (public_path.find(".env") != std::string::npos || public_path.find(".git") != std::string::npos) {
-              sendErrorResponse(header);
+              sendErrorResponse(header, !is_web);
             } else {
               server_response_message = buildDefaultResponseMessage(public_path);
               sendResponse();
             }
           } else {
-            sendErrorResponse(header);
+            sendErrorResponse(header, !is_web);
           }
         } else {
           // If the route is not empty, we will call the handler
           debug::print(parse::message("INFO: Route %1 found.", {(is_web ? "" : "/api") + route.path}));
+
+          // Check if route controller is empty
+          std::string controller = route.controller;
+          if (controller.empty()) {
+            sendErrorResponse(header, !is_web);
+          } else {
+            // Call the handler
+
+            server_response_message = route.controller;
+            sendResponse();
+          }
         }
       }
 

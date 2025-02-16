@@ -96,6 +96,10 @@ namespace http {
         for (Router router : router_list) {
           if (router.prefix == prefix) {
             for (Route route : router.routes) {
+              if ((route.path == "/" || route.path == "") && prefix == name) {
+                return route;
+              }
+
               if ((prefix + route.path) == name) {
                 return route;
               }
