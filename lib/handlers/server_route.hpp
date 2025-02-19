@@ -28,7 +28,7 @@ namespace http {
        * @return void
        */
       ServerRoute(Router router) {
-        this->setRouter(router);
+        this->addRouter(router);
       }
 
       /**
@@ -41,25 +41,6 @@ namespace http {
       }
 
       /**
-       * @brief Set the Router object
-       * 
-       * @param router (Router) The router object
-       * 
-       * @return void
-       */
-      void setRouter(Router router) {
-        // Merge the path with prefix
-        // so if path is /about and prefix is /api
-        // the path will be /api/about
-        for (Route route : router.routes) {
-          route.path = router.prefix + route.path;
-        }
-
-
-        router_list.push_back(router);
-      }
-
-      /**
        * @brief Add a new router
        * 
        * @param router (Router) The router object
@@ -67,22 +48,7 @@ namespace http {
        * @return void
        */
       void addRouter(Router router) {
-        // Push the router object to the router list
-        // if router prefix is already exist merge the routes
-        // else add the router to the list
-        for (Router r : router_list) {
-          if (r.prefix == router.prefix) {
-            for (Route route : router.routes) {
-              for (Route route : router.routes) {
-                route.path = router.prefix + route.path;
-              }
-
-              r.routes.push_back(route);
-            }
-          } else {
-            router_list.push_back(router);
-          }
-        }
+        pushRouter(router);
       }
 
       /**
@@ -93,46 +59,7 @@ namespace http {
        * @return Route
        */
       Route getRoute(std::string prefix, std::string name) {
-        for (Router router : router_list) {
-          if (router.prefix == prefix) {
-            for (Route route : router.routes) {
-              if ((route.path == "/" || route.path == "") && prefix == name) {
-                return route;
-              }
-
-              if ((prefix + route.path) == name) {
-                return route;
-              }
-            }
-          }
-        }
-
-        return Route();
-      }
-
-      /**
-       * @brief Add a new route
-       * 
-       * @param route (Route) The route object
-       * 
-       * @return void
-       */
-      void addRoute(Route route, std::string prefix) {
-        bool isExist = false;
-
-        for (Router router : router_list) {
-          if (router.prefix == prefix) {
-            router.routes.push_back(route);
-            isExist = true;
-          }
-        }
-
-        if (!isExist) {
-          // Create message error
-          debug::quit(parse::message("ERROR: Route prefix not found for route %1", {route.name}));
-          // Force exit
-          exit(1);
-        }
+        return findRoute(prefix, name);
       }
 
       /**
@@ -145,7 +72,84 @@ namespace http {
       }
 
     private:
+      /**
+       * @brief Initialize the router list
+       * 
+       * @var std::vector<Router> router_list
+       */
       std::vector<Router> router_list;
+
+      /**
+       * @brief Parse the router
+       * 
+       * @param router (Router) The router object
+       * 
+       * @return void
+       */
+      void parseRouter(Router *router) {
+        for (Route route : router->routes) {
+          route.path = router->prefix + route.path;
+        }
+      }
+
+      /**
+       * @brief Push the router to the router list
+       * 
+       * @param router (Router) The router object
+       * 
+       * @return void
+       */
+      void pushRouter(Router router) {
+        const bool isPrefixExist = router.prefix.empty();
+
+        if (router_list.empty()) {
+          if (isPrefixExist) parseRouter(&router);
+
+          router_list.push_back(router);
+          return;
+        }
+
+        for (Router list: router_list) {
+          if (list.prefix == router.prefix) {
+            parseRouter(&router);
+
+            list.routes.insert(list.routes.end(), router.routes.begin(), router.routes.end());
+            return;
+          }
+
+          if (isPrefixExist) parseRouter(&router);
+
+          router_list.push_back(router);
+        }
+      }
+
+      /**
+       * @brief Find the route
+       * 
+       * @param prefix (std::string) The route prefix
+       * @param name (std::string) The route name
+       * 
+       * @return Route
+       */
+      Route findRoute(std::string prefix, std::string name) {
+        if (router_list.empty()) return Route();
+
+        for (Router router: router_list) {
+          if (router.prefix == prefix) {
+            for (Route route : router.routes) {
+              if ((route.path == "/" || route.path.empty()) && prefix == name) {
+                return route;
+              }
+
+              if ((prefix + route.path) == name) {
+                return route;
+              }
+            }
+          }
+        }
+
+        return Route();
+      }
   };
 }
 

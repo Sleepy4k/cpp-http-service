@@ -80,10 +80,7 @@ namespace http {
        * @return void
        */
       void useRoute(Router route) {
-        // If the route is empty, we will set the default route
-        // If the route is not empty, we will add the route to the route list
-        if (server_route.isEmpty()) server_route.setRouter(route);
-        else server_route.addRouter(route);
+        server_route.addRouter(route);
       }
 
       /**
@@ -288,8 +285,6 @@ namespace http {
           if (controller.empty()) {
             sendErrorResponse(header, !is_web);
           } else {
-            // Call the handler
-
             server_response_message = route.controller;
             sendResponse();
           }
