@@ -7,7 +7,7 @@
 
 struct ApiController {
   std::string index() {
-    return response::json("{\"message\": \"Hello, World!\"}");
+    return response::json("{\"message\": 'Index page', \"status\": 200}");
   }
 
   std::string about() {
