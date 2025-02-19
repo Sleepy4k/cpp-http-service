@@ -12,14 +12,12 @@
 #include "routes/web.hpp"
 
 int main() {
-  using namespace http;
-
   // Define the server configuration
   ServerConfig config(APP_HOST_CONFIG, APP_PORT_CONFIG);
 
   // Create the server instance
-  TCPServer server = TCPServer(config);
-  
+  http::TCPServer server = http::TCPServer(config);
+
   // Register the routes
   server.useRoute(api());
   server.useRoute(web());
